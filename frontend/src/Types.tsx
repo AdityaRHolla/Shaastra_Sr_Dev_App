@@ -22,6 +22,10 @@ export interface UpdateTaskInput {
   completed?: boolean;
 }
 
+export interface TaskCardProps {
+  task: Task;
+}
+
 // For Zustand product store actions/results
 export interface TaskList {
   tasks: Task[];

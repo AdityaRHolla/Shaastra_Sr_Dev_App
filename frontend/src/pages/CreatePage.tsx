@@ -5,14 +5,15 @@ import {
   Heading,
   Input,
   Select,
+  Textarea,
   useColorModeValue,
   useToast,
   VStack,
 } from "@chakra-ui/react";
 import { useState, ChangeEvent } from "react";
-import { useTaskList } from "../list/task";
-import React from "react";
-import { NewTask } from "../Types"; // Import your NewTask type
+import { useCreateTask } from "../graphql/TaskHooks";
+import { NewTask } from "../Types";
+import { useNavigate } from "react-router-dom";
 
 const CreatePage = () => {
   const [newTask, setNewTask] = useState<NewTask>({
@@ -22,31 +23,46 @@ const CreatePage = () => {
     completed: false,
   });
   const toast = useToast();
+  const navigate = useNavigate();
+  const [createTask, { loading }] = useCreateTask();
 
-  const { createTask } = useTaskList();
-
-  const handleAddProduct = async () => {
-    const { success, message } = await createTask(newTask);
-    if (!success) {
-      toast({
-        title: "Error",
-        description: message,
-        status: "error",
-        isClosable: true,
+  const handleAddTask = async () => {
+    try {
+      await createTask({
+        variables: {
+          title: newTask.title,
+          description: newTask.description,
+          priority: newTask.priority,
+          completed: newTask.completed,
+        },
+        onCompleted: () => {
+          toast({
+            title: "Task created!",
+            status: "success",
+            duration: 500,
+            isClosable: true,
+            position: "top",
+            onCloseComplete: () => {
+              setTimeout(() => navigate("/"), 0);
+            },
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Error",
+            description: error.message,
+            status: "error",
+            isClosable: true,
+          });
+        },
       });
-    } else {
-      toast({
-        title: "Success",
-        description: message,
-        status: "success",
-        isClosable: true,
-      });
+    } catch (error) {
+      console.error("Creation failed:", error);
     }
-    setNewTask({ title: "", description: "", priority: "", completed: false });
   };
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setNewTask((prev) => ({
@@ -76,11 +92,13 @@ const CreatePage = () => {
               value={newTask.title}
               onChange={handleChange}
             />
-            <Input
+            <Textarea
               placeholder="Task Description"
               name="description"
               value={newTask.description}
               onChange={handleChange}
+              rows={4}
+              resize="vertical"
             />
             <Select
               placeholder="Select priority"
@@ -92,8 +110,21 @@ const CreatePage = () => {
               <option value="Medium">Medium</option>
               <option value="High">High</option>
             </Select>
-            <Button colorScheme="blue" onClick={handleAddProduct} w="full">
-              Add Product
+            <Button
+              colorScheme="blue"
+              onClick={handleAddTask}
+              w="full"
+              isLoading={loading}
+            >
+              Add Task
+            </Button>
+            <Button
+              variant="ghost"
+              colorScheme="gray"
+              w="full"
+              onClick={() => navigate("/")}
+            >
+              Cancel
             </Button>
           </VStack>
         </Box>

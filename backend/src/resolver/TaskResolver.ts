@@ -7,17 +7,18 @@ const taskRepo = AppDataSource.getRepository(Task);
 
 @Resolver()
 export class TaskResolver {
-  // Get all tasks
+  // Get all tasks based on filters
   @Query(() => [Task])
   async tasks(
     @Arg("completed", () => Boolean, { nullable: true }) completed?: boolean,
     @Arg("priority", () => String, { nullable: true }) priority?: string
   ): Promise<Task[]> {
     const where: any = {};
+
     if (completed !== undefined) where.completed = completed;
     if (priority) where.priority = priority;
 
-    return await taskRepo.find({ where });
+    return taskRepo.find({ where });
   }
 
   // Create task
@@ -63,7 +64,7 @@ export class TaskResolver {
       if (title !== undefined) task.title = title;
       if (description !== undefined) task.description = description;
       if (priority !== undefined) task.priority = priority;
-      if (completed !== undefined) task.completed = completed; 
+      if (completed !== undefined) task.completed = completed;
 
       await taskRepo.save(task);
       return task;

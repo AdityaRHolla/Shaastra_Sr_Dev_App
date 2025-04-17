@@ -6,43 +6,47 @@ import {
   Text,
   useColorMode,
   Select,
-  useToast
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { IoMoon } from "react-icons/io5";
 import { LuSun } from "react-icons/lu";
-import React, { useState } from "react";
-import { useTaskList } from "../list/task"; // Adjust path as needed
+import React from "react";
+import { useReactiveVar } from "@apollo/client";
+import { completedFilterVar, priorityFilterVar } from "../graphql/localState";
 
 const Navbar: React.FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
-  const { fetchTasks,updateTask } = useTaskList();
-  const toast = useToast();
 
-  // Local state for filters
-  const [completedFilter, setCompletedFilter] = useState<string>("all");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const selectBg = colorMode === "light" ? "white" : "gray.700";
+  const selectColor = colorMode === "light" ? "black" : "white";
 
-  // Handle filter changes
-  const handleCompletedChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Use Apollo's hook to track reactive var changes
+  const completedFilter = useReactiveVar(completedFilterVar);
+  const priorityFilter = useReactiveVar(priorityFilterVar);
+
+  // Convert to select values
+  const completedFilterValue =
+    completedFilter === undefined
+      ? "all"
+      : completedFilter
+      ? "completed"
+      : "notcompleted";
+
+  const priorityFilterValue = priorityFilter || "all";
+
+  // Update Apollo reactive variables on change
+  const handleCompletedChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setCompletedFilter(value);
-    
-    fetchTasks(
-      value === "all" ? undefined : value === "completed",
-      priorityFilter === "all" ? undefined : priorityFilter
-    );
+    if (value === "all") {
+      completedFilterVar(undefined);
+    } else {
+      completedFilterVar(value === "completed");
+    }
   };
 
   const handlePriorityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setPriorityFilter(value);
-
-    // Call fetchTasks with appropriate filter
-    fetchTasks(
-      completedFilter === "all" ? undefined : completedFilter === "completed",
-      value === "all" ? undefined : value
-    );
+    priorityFilterVar(value === "all" ? undefined : value);
   };
 
   return (
@@ -70,11 +74,12 @@ const Navbar: React.FC = () => {
         <HStack spacing={2} alignItems={"center"}>
           {/* Completion Filter */}
           <Select
-            value={completedFilter}
+            value={completedFilterValue}
             onChange={handleCompletedChange}
             width="140px"
             size="sm"
-            bg="white"
+            bg={selectBg}
+            color={selectColor}
           >
             <option value="all">All Tasks</option>
             <option value="completed">Completed</option>
@@ -83,11 +88,12 @@ const Navbar: React.FC = () => {
 
           {/* Priority Filter */}
           <Select
-            value={priorityFilter}
+            value={priorityFilterValue}
             onChange={handlePriorityChange}
             width="140px"
             size="sm"
-            bg="white"
+            bg={selectBg}
+            color={selectColor}
           >
             <option value="all">All Priorities</option>
             <option value="High">High</option>
@@ -96,7 +102,7 @@ const Navbar: React.FC = () => {
           </Select>
 
           <Link to={"/create"}>
-            <Button>Add Task</Button>
+            <Button colorScheme="blue">Add Task</Button>
           </Link>
           <Button onClick={toggleColorMode}>
             {colorMode === "light" ? <IoMoon /> : <LuSun size="20" />}

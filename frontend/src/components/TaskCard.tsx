@@ -22,21 +22,21 @@ import {
   Checkbox,
   Input,
 } from "@chakra-ui/react";
-import { useTaskList } from "../list/task";
 import { useState, ChangeEvent } from "react";
 import { Task, UpdateTaskInput } from "../Types";
+import { useDeleteTask, useUpdateTask} from "../graphql/TaskHooks";
+import { TaskCardProps } from "../Types";
 
-interface TaskCardProps {
-  task: Task;
-}
 
 const TaskCard = ({ task }: TaskCardProps) => {
   const [updatedTask, setUpdatedTask] = useState<Task>(task);
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
-  const { deleteTask, updateTask } = useTaskList();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const [deleteTask] = useDeleteTask();
+  const [updateTask] = useUpdateTask();
 
   const getPriorityColor = (priority: string) => {
     switch (priority.toLowerCase()) {
@@ -52,26 +52,60 @@ const TaskCard = ({ task }: TaskCardProps) => {
   };
 
   const handleDeleteTask = async (id: number) => {
-    const { success, message } = await deleteTask(id);
-    toast({
-      title: success ? "Success" : "Error",
-      description: message,
-      status: success ? "success" : "error",
-      duration: 3000,
-      isClosable: true,
-    });
+    try {
+      await deleteTask({
+        variables: { id },
+        onCompleted: () => {
+          toast({
+            title: "Success",
+            description: "Task deleted successfully",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Error",
+            description: error.message,
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+      });
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
   };
 
-  const handleUpdateTask = async (id: number, updatedData: Task) => {
-    const { success, message } = await updateTask(id, updatedData);
-    onClose();
-    toast({
-      title: success ? "Success" : "Error",
-      description: success ? "Task updated successfully" : message,
-      status: success ? "success" : "error",
-      duration: 3000,
-      isClosable: true,
-    });
+  const handleUpdateTask = async (id: number, updatedData: UpdateTaskInput) => {
+    try {
+      await updateTask({
+        variables: { id, ...updatedData },
+        onCompleted: () => {
+          toast({
+            title: "Success",
+            description: "Task updated successfully",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+          });
+          onClose();
+        },
+        onError: (error) => {
+          toast({
+            title: "Error",
+            description: error.message,
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+      });
+    } catch (error) {
+      console.error("Update failed:", error);
+    }
   };
 
   const handleInputChange = (
@@ -84,21 +118,33 @@ const TaskCard = ({ task }: TaskCardProps) => {
     }));
   };
 
-  const handleToggleComplete = async (
-    id: number,
-    completed: boolean,
-  ) => {
-    const { success, message } = await updateTask(id, {completed});
-    if (success) {
-      setUpdatedTask((prev) => ({ ...prev, completed }));
+  const handleToggleComplete = async (id: number, completed: boolean) => {
+    try {
+      await updateTask({
+        variables: { id, completed },
+        onCompleted: () => {
+          setUpdatedTask((prev) => ({ ...prev, completed }));
+          toast({
+            title: "Success",
+            description: "Task status updated",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Error",
+            description: error.message,
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+      });
+    } catch (error) {
+      console.error("Toggle failed:", error);
     }
-    toast({
-      title: success ? "Success" : "Error",
-      description: success ? "Task status updated" : message,
-      status: success ? "success" : "error",
-      duration: 3000,
-      isClosable: true,
-    });
   };
 
   return (
@@ -115,9 +161,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
         <HStack justifyContent="space-between" mb={2}>
           <Checkbox
             isChecked={updatedTask.completed}
-            onChange={(e) =>
-              handleToggleComplete(task.id, e.target.checked)
-            }
+            onChange={(e) => handleToggleComplete(task.id, e.target.checked)}
             colorScheme="green"
           />
           <Heading as="h3" size="md">

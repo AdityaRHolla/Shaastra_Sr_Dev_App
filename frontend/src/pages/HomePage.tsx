@@ -1,53 +1,35 @@
-import { Container, SimpleGrid, Text, VStack } from "@chakra-ui/react";
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { useTaskList } from "../list/task";
+import { Container, SimpleGrid, Text, VStack, Spinner } from "@chakra-ui/react";
+import { useTasks } from "../graphql/TaskHooks";
 import TaskCard from "../components/TaskCard";
-import React from "react";
-// import { Product } from "../types"; // Import your Product type
+import { Task } from "../Types";
 
 const HomePage = () => {
-  const { fetchTasks, tasks } = useTaskList();
+  const { data, loading, error } = useTasks();
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  if (loading) return <Spinner size="xl" mt={8} />;
+  if (error) return <Text color="red.500">Error: {error.message}</Text>;
 
   return (
     <Container maxW="container.xl" py={12}>
       <VStack spacing={8}>
         <Text
-          fontSize={"30"}
-          fontWeight={"bold"}
-          bgGradient={"linear(to-r, cyan.400, blue.500)"}
-          bgClip={"text"}
-          textAlign={"center"}
+          fontSize="30"
+          fontWeight="bold"
+          bgGradient="linear(to-r, cyan.400, blue.500)"
+          bgClip="text"
         >
           Current Tasks
         </Text>
 
-        <SimpleGrid
-          columns={{
-            base: 1,
-            md: 2,
-            lg: 3,
-          }}
-          spacing={10}
-          w={"full"}
-        >
-          {tasks.map((task) => (
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={10} w="full">
+          {data?.tasks.map((task: Task) => (
             <TaskCard key={task.id} task={task} />
           ))}
         </SimpleGrid>
 
-        {tasks.length === 0 && (
-          <Text
-            fontSize="xl"
-            textAlign={"center"}
-            fontWeight="bold"
-            color="gray.500"
-          >
-            No Tasks pending{" "}
+        {data?.tasks.length === 0 && (
+          <Text fontSize="xl" color="gray.500">
+            No tasks found.
           </Text>
         )}
       </VStack>
