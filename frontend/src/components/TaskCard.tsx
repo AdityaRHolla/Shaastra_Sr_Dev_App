@@ -1,4 +1,4 @@
-import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import { DeleteIcon, EditIcon, TimeIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -24,9 +24,9 @@ import {
 } from "@chakra-ui/react";
 import { useState, ChangeEvent } from "react";
 import { Task, UpdateTaskInput } from "../Types";
-import { useDeleteTask, useUpdateTask} from "../graphql/TaskHooks";
+import { useDeleteTask, useUpdateTask } from "../graphql/TaskHooks";
 import { TaskCardProps } from "../Types";
-
+import {TaskHistoryModal} from "./TaskHistoryModal";
 
 const TaskCard = ({ task }: TaskCardProps) => {
   const [updatedTask, setUpdatedTask] = useState<Task>(task);
@@ -34,6 +34,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
   const bg = useColorModeValue("white", "gray.800");
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const [deleteTask] = useDeleteTask();
   const [updateTask] = useUpdateTask();
@@ -72,7 +73,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
             duration: 3000,
             isClosable: true,
           });
-        }
+        },
       });
     } catch (error) {
       console.error("Delete failed:", error);
@@ -101,7 +102,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
             duration: 3000,
             isClosable: true,
           });
-        }
+        },
       });
     } catch (error) {
       console.error("Update failed:", error);
@@ -140,7 +141,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
             duration: 3000,
             isClosable: true,
           });
-        }
+        },
       });
     } catch (error) {
       console.error("Toggle failed:", error);
@@ -189,8 +190,20 @@ const TaskCard = ({ task }: TaskCardProps) => {
             onClick={() => handleDeleteTask(task.id)}
             colorScheme="red"
           />
+          <IconButton
+            aria-label="View history"
+            icon={<TimeIcon />}
+            onClick={() => setIsHistoryOpen(true)}
+            colorScheme="purple"
+          />
         </HStack>
       </Box>
+
+      <TaskHistoryModal
+        taskId={task.id}
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+      />
 
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />

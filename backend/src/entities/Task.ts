@@ -1,8 +1,8 @@
-// src/entities/Product.ts
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { ObjectType, Field, Float, Int } from "type-graphql";
+import { TaskHistory } from "./TaskHistory.js";
 
-@ObjectType() // <-- This is required!
+@ObjectType() 
 @Entity()
 export class Task {
   @Field(() => Number)
@@ -24,4 +24,7 @@ export class Task {
   @Field(() => Boolean)
   @Column("boolean", { default: false })
   completed!: boolean;
+
+  @OneToMany(() => TaskHistory, history => history.task)
+  history!: TaskHistory[];
 }

@@ -4,9 +4,8 @@ import express from "express";
 import cors from "cors";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
-import { createSchema } from "./schema.ts"; 
-import { AppDataSource } from "../ormconfig.ts"; 
-
+import { createSchema } from "./schema.js";
+import  AppDataSource  from "./ormconfig.js";
 
 dotenv.config();
 
@@ -29,12 +28,6 @@ const main = async () => {
     })
   );
 
-  // Optional: Log all incoming requests (for debugging purposes)
-  app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method}${req.body} ${req.url}`);
-    next();
-  });
-
   // Apollo Server setup
   const server = new ApolloServer({ schema });
   await server.start();
@@ -46,7 +39,7 @@ const main = async () => {
   );
 
   app.listen(PORT, () => {
-    console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+    console.log(`Server ready at http://localhost:${PORT}/graphql`);
   });
 };
 

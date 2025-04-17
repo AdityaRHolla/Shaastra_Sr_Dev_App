@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "main": "src/server.ts",
   "scripts": {
-    "dev": "nodemon --watch src --exec tsx src/server.ts"
+    "dev": "nodemon --watch src --exec tsx src/server.ts",
+    "typeorm:generate": "npm run typeorm -- migration:generate src/migrations/AutoMigration",
+    "typeorm:run": "npm run typeorm -- migration:run",
+    "typeorm:revert": "npm run typeorm -- migration:revert",
+    "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js",
+    "migration:generate": "npm run typeorm -- migration:generate src/migrations/AddTaskHistory -d src/ormconfig.ts"
   },
   "type": "module",
   "keywords": [],
@@ -19,6 +24,7 @@
     "graphql": "^16.10.0",
     "pg": "^8.14.1",
     "reflect-metadata": "^0.2.2",
+    "tsconfig-paths": "^4.2.0",
     "type-graphql": "^2.0.0-rc.2",
     "typeorm": "^0.3.22"
   },
@@ -26,7 +32,9 @@
     "@types/cors": "^2.8.17",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.19.3",
+    "typeorm-ts-node-commonjs": "^0.3.20",
     "typescript": "^5.8.3"
   }
 }

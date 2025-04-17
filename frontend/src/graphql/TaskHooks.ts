@@ -62,6 +62,17 @@ export const DELETE_TASK = gql`
   }
 `;
 
+export const GET_TASK_HISTORY = gql`
+  query GetTaskHistory($taskId: Int!) {
+    taskHistory(taskId: $taskId) {
+      id
+      action
+      details
+      timestamp
+    }
+  }
+`;
+
 // Custom hooks for usage in components
 
 export function useTasks() {

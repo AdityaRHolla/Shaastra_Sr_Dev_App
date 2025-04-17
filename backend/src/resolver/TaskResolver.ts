@@ -1,9 +1,11 @@
 import { Resolver, Query, Mutation, Arg } from "type-graphql";
-import { Task } from "../entities/Task.ts";
+import { Task } from "../entities/Task.js";
 import { GraphQLError } from "graphql";
-import { AppDataSource } from "../../ormconfig.ts";
+import AppDataSource from "../ormconfig.js";
+import { TaskHistory } from "../entities/TaskHistory.js";
 
 const taskRepo = AppDataSource.getRepository(Task);
+const taskHistoryRepo = AppDataSource.getRepository(TaskHistory);
 
 @Resolver()
 export class TaskResolver {
@@ -38,6 +40,14 @@ export class TaskResolver {
     try {
       const task = taskRepo.create({ title, description, priority, completed });
       await taskRepo.save(task);
+
+      const taskHistory = taskHistoryRepo.create({
+        action: "CREATED",
+        timestamp: new Date(),
+        task: task,
+      });
+      await taskHistoryRepo.save(taskHistory);
+
       return task;
     } catch (error) {
       console.error("Error creating task:", error);
@@ -60,13 +70,34 @@ export class TaskResolver {
       const task = await taskRepo.findOneBy({ id });
       if (!task) throw new GraphQLError("Task not found");
 
-      // Update fields only if provided
-      if (title !== undefined) task.title = title;
-      if (description !== undefined) task.description = description;
-      if (priority !== undefined) task.priority = priority;
-      if (completed !== undefined) task.completed = completed;
+      const originalTask = { ...task };
+      const updates = { title, description, priority, completed };
+      const changes: string[] = [];
 
-      await taskRepo.save(task);
+      // List of fields to compare
+      (Object.keys(updates) as (keyof typeof updates)[]).forEach((field) => {
+        const newValue = updates[field];
+        if (newValue !== undefined && newValue !== originalTask[field]) {
+          changes.push(
+            `${field} from '${originalTask[field]}' to '${newValue}'`
+          );
+          // @ts-ignore
+          task[field] = newValue;
+        }
+      });
+
+      if (changes.length > 0) {
+        await taskRepo.save(task);
+
+        const taskHistory = taskHistoryRepo.create({
+          action: "UPDATED",
+          details: `Changed: ${changes.join("; ")}`,
+          timestamp: new Date(),
+          task: task,
+        });
+        await taskHistoryRepo.save(taskHistory);
+      }
+
       return task;
     } catch (error) {
       console.error("Error updating task:", error);
