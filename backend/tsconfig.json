@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "target": "es2022",
+      "module": "nodenext",
+      "moduleResolution": "nodenext",
+      "lib": ["es2021", "esnext.asynciterable"],
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "noEmit": true,
+      "allowImportingTsExtensions": true,
+      "esModuleInterop": true
+    }
+  }
+  
